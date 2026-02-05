@@ -1,4 +1,5 @@
 import notesAPI from "../api/notes-api.js";
+import Swal from "sweetalert2";
 import "./appBarComponent.js";
 import "./noteListComponent.js";
 import "./noteFormComponent.js";
@@ -151,8 +152,23 @@ class NotesApp extends HTMLElement {
           body,
         });
         await this._loadNotes();
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
+          title: "Catatan berhasil ditambahkan",
+          showConfirmButton: false,
+          timer: 1500,
+        });
       } catch (error) {
-        alert(error.message);
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "error",
+          title: "Catatan gagal ditambahkan",
+          showConfirmButton: false,
+          timer: 1500,
+        });
         console.error(error);
       } finally {
         this._showLoading(false);
@@ -166,7 +182,7 @@ class NotesApp extends HTMLElement {
       this._shadowRoot.getElementById("modal-title").innerText = note.title;
       this._shadowRoot.getElementById("modal-body").innerText = note.body;
       this._shadowRoot.getElementById("modal-date").innerText = new Date(
-        note.createdAt,
+        note.createdAt
       ).toLocaleDateString();
 
       modal.onclick = (e) => {
@@ -194,8 +210,25 @@ class NotesApp extends HTMLElement {
           await notesAPI.archiveNote(noteId);
         }
         await this._loadNotes();
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "success",
+          title: note.archived
+            ? "Catatan berhasil diunarsipkan"
+            : "Catatan berhasil diarsipkan",
+          showConfirmButton: false,
+          timer: 1500,
+        });
       } catch (error) {
-        alert(error.message);
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "error",
+          title: "Catatan gagal diarsipkan",
+          showConfirmButton: false,
+          timer: 1500,
+        });
         console.error(error);
       } finally {
         this._showLoading(false);
@@ -203,16 +236,37 @@ class NotesApp extends HTMLElement {
     });
 
     this.addEventListener("deleteNote", async (event) => {
-      const noteId = event.detail;
-      try {
-        this._showLoading(true);
-        await notesAPI.deleteNote(noteId);
-        await this._loadNotes();
-      } catch (error) {
-        alert(error.message);
-        console.error(error);
-      } finally {
-        this._showLoading(false);
+      const result = await Swal.fire({
+        title: "Apakah anda yakin ",
+        text: "Catatan akan dihapus",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, Hapus!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        const noteId = event.detail;
+        try {
+          this._showLoading(true);
+          await notesAPI.deleteNote(noteId);
+          await this._loadNotes();
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: "Catatan berhasil dihapus",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } catch (error) {
+          alert(error.message);
+          console.error(error);
+        } finally {
+          this._showLoading(false);
+        }
       }
     });
   }

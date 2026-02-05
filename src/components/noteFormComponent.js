@@ -178,7 +178,7 @@ class NoteForm extends HTMLElement {
           detail: newNote,
           bubbles: true,
           composed: true,
-        }),
+        })
       );
       form.reset();
     });

@@ -27,7 +27,7 @@ class LoadingIndicator extends HTMLElement {
             .loading-indicator{
                 width: 50px;
                 height: 50px;
-                border: 5px solid var(--primary-color);
+                border: 5px solid var(--secondary-color);
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
             }

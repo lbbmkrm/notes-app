@@ -127,8 +127,8 @@ class NoteItem extends HTMLElement {
 
             .btn-delete {
                 background: none;
-                border: 1px solid red;
-                color: red;
+                border: 1px solid var(--secondary-color);
+                color: var(--secondary-color);
                 border-radius: 6px;
                 padding: 4px 12px;
                 font-size: 0.8rem;
@@ -138,7 +138,7 @@ class NoteItem extends HTMLElement {
             }
 
             .btn-delete:hover {
-                background-color: red;
+                background-color: var(--secondary-hover);
                 color: white;
             }
 
@@ -176,7 +176,7 @@ class NoteItem extends HTMLElement {
             detail: this._note,
             bubbles: true,
             composed: true,
-          }),
+          })
         );
       });
 
@@ -189,7 +189,7 @@ class NoteItem extends HTMLElement {
             detail: this._note.id,
             bubbles: true,
             composed: true,
-          }),
+          })
         );
       });
 
@@ -202,7 +202,7 @@ class NoteItem extends HTMLElement {
             detail: this._note.id,
             bubbles: true,
             composed: true,
-          }),
+          })
         );
       });
   }
