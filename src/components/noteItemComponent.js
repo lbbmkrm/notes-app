@@ -49,7 +49,7 @@ class NoteItem extends HTMLElement {
             }
 
             .note-item:hover {
-                transform: translateY(-3px);
+                transform: translateY(-12px);
                 box-shadow: 0 12px 20px -5px rgb(0 0 0 / 0.15);
                 border-color: #d1d5db;
             }
@@ -103,6 +103,10 @@ class NoteItem extends HTMLElement {
                 justify-content: space-between;
                 align-items: center;
             }
+            .note-footer .action {
+                display: flex;
+                gap: 8px;
+            }
 
             .btn-archive {
                 background: none;
@@ -118,6 +122,23 @@ class NoteItem extends HTMLElement {
 
             .btn-archive:hover {
                 background-color: var(--primary-color);
+                color: white;
+            }
+
+            .btn-delete {
+                background: none;
+                border: 1px solid red;
+                color: red;
+                border-radius: 6px;
+                padding: 4px 12px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .btn-delete:hover {
+                background-color: red;
                 color: white;
             }
 
@@ -171,6 +192,19 @@ class NoteItem extends HTMLElement {
           }),
         );
       });
+
+    this._shadowRoot
+      .querySelector(".btn-delete")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.dispatchEvent(
+          new CustomEvent("deleteNote", {
+            detail: this._note.id,
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      });
   }
 
   render() {
@@ -186,9 +220,14 @@ class NoteItem extends HTMLElement {
                 <p>${this._note.body}</p>
                 <div class="note-footer">
                     <div class="date">${new Date(this._note.createdAt).toLocaleDateString()}</div>
-                    <button class="btn-archive">
-                        ${this._note.archived ? "Buka Arsip" : "Arsipkan"}
-                    </button>
+                    <div class="action">
+                        <button class="btn-archive">
+                            ${this._note.archived ? "Buka Arsip" : "Arsipkan"}
+                        </button>
+                        <button class="btn-delete">
+                            Hapus
+                        </button>
+                    </div>
                 </div>
             </div>
         `;

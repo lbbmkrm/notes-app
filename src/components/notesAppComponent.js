@@ -1,12 +1,13 @@
-import notesData from "../data/notes.js";
+import notesAPI from "../api/notes-api.js";
 import "./appBarComponent.js";
 import "./noteListComponent.js";
 import "./noteFormComponent.js";
+import "./loadingIndicatorComponent.js";
 
 class NotesApp extends HTMLElement {
   _shadowRoot = null;
   _style = null;
-  _notes = [...notesData];
+  _notes = [];
   constructor() {
     super();
     this._shadowRoot = this.attachShadow({ mode: "open" });
@@ -137,14 +138,25 @@ class NotesApp extends HTMLElement {
     this._shadowRoot.innerHTML = ``;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     this.render();
+    this._loadNotes();
 
-    this.addEventListener("addNote", (event) => {
-      const newNote = event.detail;
-      this._notes = [newNote, ...this._notes];
-
-      this._updateNoteLists();
+    this.addEventListener("addNote", async (event) => {
+      const { title, body } = event.detail;
+      try {
+        this._showLoading(true);
+        await notesAPI.createNote({
+          title,
+          body,
+        });
+        await this._loadNotes();
+      } catch (error) {
+        alert(error.message);
+        console.error(error);
+      } finally {
+        this._showLoading(false);
+      }
     });
 
     this.addEventListener("viewNote", (event) => {
@@ -170,19 +182,55 @@ class NotesApp extends HTMLElement {
         this._shadowRoot.getElementById("modal").style.display = "none";
       });
 
-    this.addEventListener("archiveNote", (event) => {
+    this.addEventListener("archiveNote", async (event) => {
       const noteId = event.detail;
-      this._notes = this._notes.map((note) => {
-        if (note.id === noteId) {
-          return { ...note, archived: !note.archived };
-        }
-        return note;
-      });
+      const note = this._notes.find((note) => note.id === noteId);
 
-      this._updateNoteLists();
+      try {
+        this._showLoading(true);
+        if (note.archived) {
+          await notesAPI.unarchiveNote(noteId);
+        } else {
+          await notesAPI.archiveNote(noteId);
+        }
+        await this._loadNotes();
+      } catch (error) {
+        alert(error.message);
+        console.error(error);
+      } finally {
+        this._showLoading(false);
+      }
+    });
+
+    this.addEventListener("deleteNote", async (event) => {
+      const noteId = event.detail;
+      try {
+        this._showLoading(true);
+        await notesAPI.deleteNote(noteId);
+        await this._loadNotes();
+      } catch (error) {
+        alert(error.message);
+        console.error(error);
+      } finally {
+        this._showLoading(false);
+      }
     });
   }
 
+  async _loadNotes() {
+    try {
+      this._showLoading(true);
+      const activeNotes = await notesAPI.getAllNotes();
+      const archivedNotes = await notesAPI.getArchivedNotes();
+
+      this._notes = [...activeNotes, ...archivedNotes];
+      this._updateNoteLists();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this._showLoading(false);
+    }
+  }
   _updateNoteLists() {
     const activeNoteList = this._shadowRoot.querySelector("#active-notes");
     const archivedNoteList = this._shadowRoot.querySelector("#archived-notes");
@@ -194,12 +242,23 @@ class NotesApp extends HTMLElement {
       archivedNoteList.setNotes = this._notes.filter((note) => note.archived);
     }
   }
+  _showLoading(isActive) {
+    const loader = this._shadowRoot.querySelector("loading-indicator");
+    if (loader) {
+      if (isActive) {
+        loader.setAttribute("active", "");
+      } else {
+        loader.removeAttribute("active");
+      }
+    }
+  }
 
   render() {
     this._emptyContent();
     this._updateStyle();
     this._shadowRoot.innerHTML += `
     ${this._style.outerHTML}
+    <loading-indicator></loading-indicator>
         <app-bar title="Notes App"></app-bar>
         <main>
             <note-form></note-form>
