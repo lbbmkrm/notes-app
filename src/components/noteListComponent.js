@@ -1,3 +1,4 @@
+import { animate, stagger } from "animejs";
 import "./noteItemComponent.js";
 
 class NoteList extends HTMLElement {
@@ -66,7 +67,7 @@ class NoteList extends HTMLElement {
   render() {
     this.updateStyle();
     this._emptyContent();
-    this._shadowRoot.innerHTML += `
+    this._shadowRoot.innerHTML = `
             ${this._style.outerHTML}
             <div class="note-list"></div>
         `;
@@ -79,6 +80,15 @@ class NoteList extends HTMLElement {
         return this.#createNoteItem(note);
       });
       container.append(...noteElements);
+
+      animate(container.querySelectorAll("note-item"), {
+        opacity: [0, 1],
+        translateY: [20, 0],
+        scale: [0.9, 1],
+        delay: stagger(100),
+        duration: 400,
+        easing: "easeOutCubic",
+      });
     }
   }
 }

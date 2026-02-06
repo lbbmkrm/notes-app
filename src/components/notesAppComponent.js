@@ -1,5 +1,6 @@
 import notesAPI from "../api/notes-api.js";
 import Swal from "sweetalert2";
+import { animate } from "animejs";
 import "./appBarComponent.js";
 import "./noteListComponent.js";
 import "./noteFormComponent.js";
@@ -62,7 +63,7 @@ class NotesApp extends HTMLElement {
             padding: 20px;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.3s ease;
+            opacity: 0;
         }
         
         .modal-content {
@@ -76,12 +77,6 @@ class NotesApp extends HTMLElement {
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             border: 1px solid #e2e8f0;
             overflow-y: auto;
-            animation: modalScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes modalScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
         }
 
         .modal-content h2 {
@@ -178,16 +173,33 @@ class NotesApp extends HTMLElement {
     this.addEventListener("viewNote", (event) => {
       const note = event.detail;
       const modal = this._shadowRoot.getElementById("modal");
-      modal.style.display = "flex";
+      const modalContent = this._shadowRoot.querySelector(".modal-content");
+
       this._shadowRoot.getElementById("modal-title").innerText = note.title;
       this._shadowRoot.getElementById("modal-body").innerText = note.body;
       this._shadowRoot.getElementById("modal-date").innerText = new Date(
         note.createdAt
       ).toLocaleDateString();
 
+      // Membuka modal dengan animasi
+      modal.style.display = "flex";
+      animate(modal, {
+        opacity: [0, 1],
+        duration: 300,
+        easing: "easeOutSine",
+      });
+
+      animate(modalContent, {
+        scale: [0.9, 1],
+        opacity: [0, 1],
+        translateY: [20, 0],
+        duration: 400,
+        easing: "easeOutCubic",
+      });
+
       modal.onclick = (e) => {
         if (e.target === modal) {
-          modal.style.display = "none";
+          this._closeModal();
         }
       };
     });
@@ -195,7 +207,7 @@ class NotesApp extends HTMLElement {
     this._shadowRoot
       .getElementById("close-modal")
       .addEventListener("click", () => {
-        this._shadowRoot.getElementById("modal").style.display = "none";
+        this._closeModal();
       });
 
     this.addEventListener("archiveNote", async (event) => {
@@ -268,6 +280,27 @@ class NotesApp extends HTMLElement {
           this._showLoading(false);
         }
       }
+    });
+  }
+
+  _closeModal() {
+    const modal = this._shadowRoot.getElementById("modal");
+    const modalContent = this._shadowRoot.querySelector(".modal-content");
+
+    animate(modalContent, {
+      scale: [1, 0.9],
+      opacity: [1, 0],
+      translateY: [0, 20],
+      duration: 300,
+      easing: "easeInCubic",
+    });
+
+    animate(modal, {
+      opacity: [1, 0],
+      duration: 300,
+      easing: "easeInSine",
+    }).then(() => {
+      modal.style.display = "none";
     });
   }
 
