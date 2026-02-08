@@ -8,6 +8,7 @@ class NoteItem extends HTMLElement {
     createdAt: null,
     archived: false,
   };
+
   static observedAttributes = ["id"];
 
   constructor() {
@@ -23,144 +24,140 @@ class NoteItem extends HTMLElement {
 
   updateStyle() {
     this._style.textContent = `
-            :host {
-                display: block;
-                height: 100%;
-            }
+      :host {
+        display: block;
+      }
 
-            .note-item {
-                background-color: var(--card-bg);
-                border-radius: var(--border-radius);
-                padding: 20px;
-                box-shadow: var(--shadow);
-                transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-                height: 100%;
-                display: grid;
-                grid-template-rows: auto 1fr auto;
-                border: 1px solid #e5e7eb;
-                cursor: pointer;
-                position: relative;
-            }
+      .note-card {
+      height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        transition: all 0.3s;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
 
-            .note-item.archived {
-                background-color: #f8fafc;
-                opacity: 0.8;
-                border-style: dashed;
-            }
+      .note-card:hover {
+        transform: translateY(-4px);
+        border-color: #e5e7eb;
+      }
 
-            .note-item:hover {
-                transform: translateY(-12px);
-                box-shadow: 0 12px 20px -5px rgb(0 0 0 / 0.15);
-                border-color: #d1d5db;
-            }
+      .note-card:hover .note-actions {
+        opacity: 1;
+      }
 
-            .note-item h1 {
-                margin: 0 0 10px 0;
-                font-size: 1.15rem;
-                font-weight: 700;
-                color: var(--text-main);
-                line-height: 1.35;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-            }
+      .note-header {
+        margin-bottom: 0.75rem;
+      }
 
-            .badge-archived {
-                font-size: 0.7rem;
-                background-color: #94a3b8;
-                color: white;
-                padding: 2px 8px;
-                border-radius: 6px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.025em;
-            }
+      .note-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+      }
 
-            .note-item p {
-                margin: 0 0 16px 0;
-                color: var(--text-soft);
-                font-size: 0.95rem;
-                white-space: pre-wrap;
-                height: 40px;
-                overflow: hidden;
-            }
+      .note-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
 
-            .note-item .date {
-                font-size: 0.85rem;
-                color: var(--text-soft);
-                font-style: normal;
-                background: #f1f5f9;
-                padding: 6px 10px;
-                border-radius: 999px;
-                border: 1px solid #e2e8f0;
-                width: fit-content;
-            }
+      .status-active {
+        background: color-mix(in srgb, var(--primary-color) 15%, white);
+        color: var(--primary-color);
+      }
 
-            .note-footer {
-                margin-top: 12px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .note-footer .action {
-                display: flex;
-                gap: 8px;
-            }
+      .status-archived {
+        background: color-mix(in srgb, var(--secondary-color) 15%, white);
+        color: var(--secondary-color);
+      }
 
-            .btn-archive {
-                background: none;
-                border: 1px solid var(--primary-color);
-                color: var(--primary-color);
-                border-radius: 6px;
-                padding: 4px 12px;
-                font-size: 0.8rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
+      .note-body {
+        color: var(--text-soft);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
 
-            .btn-archive:hover {
-                background-color: var(--primary-color);
-                color: white;
-            }
+      .note-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #eef2f0;
+      }
 
-            .btn-delete {
-                background: none;
-                border: 1px solid var(--secondary-color);
-                color: var(--secondary-color);
-                border-radius: 6px;
-                padding: 4px 12px;
-                font-size: 0.8rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
+      .note-date {
+        font-size: 0.8rem;
+        color: var(--text-soft);
+      }
 
-            .btn-delete:hover {
-                background-color: var(--secondary-hover);
-                color: white;
-            }
+      .note-actions {
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      @media (max-width: 768px), (hover: none) {
+        .note-actions {
+          opacity: 1;
+        }
+      }
 
-            .note-item.archived .btn-archive {
-                border-color: var(--text-soft);
-                color: var(--text-soft);
-            }
+      .action-btn {
+        background: none;
+        border: 1px solid transparent;
+        padding: 0.25rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
 
-            .note-item.archived .btn-archive:hover {
-                background-color: var(--text-soft);
-                color: white;
-            }
-        `;
+      .action-btn.archive {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .action-btn.archive:hover {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .action-btn.delete {
+        color: var(--secondary-color);
+        border-color: var(--secondary-color);
+      }
+
+      .action-btn.delete:hover {
+        background: var(--secondary-hover);
+        color: white;
+      }
+    `;
   }
 
   _emptyContent() {
-    this._shadowRoot.innerHTML = ``;
+    this._shadowRoot.innerHTML = "";
   }
 
-  attributeChangedCallback(name, oldName, newName) {
+  attributeChangedCallback(name, oldValue, newValue) {
     if (name === "id") {
-      this._note.id = newName;
+      this._note.id = newValue;
       this.render();
     }
   }
@@ -169,7 +166,7 @@ class NoteItem extends HTMLElement {
     this.render();
 
     this._shadowRoot
-      .querySelector(".note-item")
+      .querySelector(".note-card")
       .addEventListener("click", () => {
         this.dispatchEvent(
           new CustomEvent("viewNote", {
@@ -181,7 +178,7 @@ class NoteItem extends HTMLElement {
       });
 
     this._shadowRoot
-      .querySelector(".btn-archive")
+      .querySelector(".action-btn.archive")
       .addEventListener("click", (e) => {
         e.stopPropagation();
         this.dispatchEvent(
@@ -194,7 +191,7 @@ class NoteItem extends HTMLElement {
       });
 
     this._shadowRoot
-      .querySelector(".btn-delete")
+      .querySelector(".action-btn.delete")
       .addEventListener("click", (e) => {
         e.stopPropagation();
         this.dispatchEvent(
@@ -210,27 +207,37 @@ class NoteItem extends HTMLElement {
   render() {
     this.updateStyle();
     this._emptyContent();
-    this._shadowRoot.innerHTML += `
-            ${this._style.outerHTML}
-            <div class="note-item ${this._note.archived ? "archived" : ""}">
-                <h1>
-                    <span>${this._note.title}</span>
-                    ${this._note.archived ? '<span class="badge-archived">Arsip</span>' : ""}
-                </h1>
-                <p>${this._note.body}</p>
-                <div class="note-footer">
-                    <div class="date">${new Date(this._note.createdAt).toLocaleDateString()}</div>
-                    <div class="action">
-                        <button class="btn-archive">
-                            ${this._note.archived ? "Buka Arsip" : "Arsipkan"}
-                        </button>
-                        <button class="btn-delete">
-                            Hapus
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
+
+    this._shadowRoot.innerHTML = `
+      ${this._style.outerHTML}
+      <div class="note-card">
+        <div class="note-header">
+          <h3 class="note-title">${this._note.title}</h3>
+          <span class="note-status ${
+            this._note.archived ? "status-archived" : "status-active"
+          }">
+            ${this._note.archived ? "Arsip" : "Aktif"}
+          </span>
+        </div>
+
+        <p class="note-body">${this._note.body}</p>
+
+        <div class="note-footer">
+          <span class="note-date">
+            ${new Date(this._note.createdAt).toLocaleDateString()}
+          </span>
+
+          <div class="note-actions">
+            <button class="action-btn archive">
+              ${this._note.archived ? "Aktifkan" : "Arsipkan"}
+            </button>
+            <button class="action-btn delete">
+              Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
   }
 }
 

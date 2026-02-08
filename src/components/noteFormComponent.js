@@ -110,7 +110,7 @@ class NoteForm extends HTMLElement {
   render() {
     this._emptyContent();
     this._updateStyle();
-    this._shadowRoot.innerHTML += `
+    this._shadowRoot.innerHTML = `
     ${this._style.outerHTML}
     <form id="noteForm">
         <div class="form-group">
@@ -167,11 +167,8 @@ class NoteForm extends HTMLElement {
 
       const formData = new FormData(form);
       const newNote = {
-        id: `${new Date().getTime()}-${Math.random().toString(36).slice(2, 9)}`,
         title: formData.get("title"),
         body: formData.get("body"),
-        createdAt: new Date().toISOString(),
-        archived: false,
       };
       this.dispatchEvent(
         new CustomEvent("addNote", {

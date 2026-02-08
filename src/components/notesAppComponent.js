@@ -2,6 +2,7 @@ import notesAPI from "../api/notes-api.js";
 import Swal from "sweetalert2";
 import { animate } from "animejs";
 import "./appBarComponent.js";
+import "./navbarComponent.js";
 import "./noteListComponent.js";
 import "./noteFormComponent.js";
 import "./loadingIndicatorComponent.js";
@@ -10,205 +11,181 @@ class NotesApp extends HTMLElement {
   _shadowRoot = null;
   _style = null;
   _notes = [];
+  _query = "";
+  _currentFilter = "all";
+
   constructor() {
     super();
     this._shadowRoot = this.attachShadow({ mode: "open" });
     this._style = document.createElement("style");
   }
 
+  _openModal(modalId) {
+    const modal = this._shadowRoot.getElementById(modalId);
+    const modalContent = modal.querySelector(".modal-content");
+
+    modal.style.display = "flex";
+
+    animate(modal, {
+      opacity: [0, 1],
+      duration: 300,
+      easing: "easeOutSine",
+    });
+
+    animate(modalContent, {
+      scale: [0.9, 1],
+      opacity: [0, 1],
+      translateY: [20, 0],
+      duration: 400,
+      easing: "easeOutCubic",
+    });
+  }
+
+  _closeModal(modalId) {
+    const modal = this._shadowRoot.getElementById(modalId);
+    const modalContent = modal.querySelector(".modal-content");
+
+    animate(modalContent, {
+      scale: [1, 0.9],
+      opacity: [1, 0],
+      translateY: [0, 20],
+      duration: 300,
+      easing: "easeInCubic",
+    });
+
+    animate(modal, {
+      opacity: [1, 0],
+      duration: 300,
+      easing: "easeInSine",
+    }).then(() => {
+      modal.style.display = "none";
+    });
+  }
+
   _updateStyle() {
     this._style.textContent = `
-        :host {
-            display: block;
-            width: 100%;
-            min-height: 100vh;
-        }
+      :host {
+        display: block;
+        width: 100%;
+        min-height: 100vh;
+      }
 
-        main {
-            padding: 32px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+      main {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
 
-        .section-title {
-            margin: 2rem 0 1.25rem 0;
-            text-align: center;
-            color: var(--text-main);
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.015em;
-            position: relative;
-        }
+      .section-title {
+        margin: 2rem;
+        color: var(--text-main);
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
 
-        .section-title::after {
-            content: "";
-            display: block;
-            width: 64px;
-            height: 3px;
-            background: var(--primary-color);
-            border-radius: 999px;
-            margin: 8px auto 0;
-        }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(15, 23, 42, 0.6);
+        z-index: 1000;
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+      }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(15, 23, 42, 0.6);
-            z-index: 1000;
-            backdrop-filter: blur(8px);
-            padding: 20px;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-        }
-        
-        .modal-content {
-            position: relative;
-            width: 100%;
-            max-width: 550px;
-            max-height: 85vh;
-            background-color: var(--card-bg);
-            padding: 40px 32px 32px 32px;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid #e2e8f0;
-            overflow-y: auto;
-        }
+      .modal-content {
+        background: var(--card-bg);
+        max-width: 550px;
+        width: 100%;
+        padding: 32px;
+        border-radius: 20px;
+        position: relative;
+      }
 
-        .modal-content h2 {
-            margin: 0 0 16px 0;
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            line-height: 1.4;
-        }
+      .close-modal {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        border: none;
+        background: #f1f5f9;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        font-size: 24px;
+        cursor: pointer;
+      }
 
-        .modal-content p {
-            color: var(--text-soft);
-            line-height: 1.7;
-            font-size: 1.05rem;
-            margin-bottom: 24px;
-            white-space: pre-wrap;
-        }
-
-        .modal-content .date {
-            display: inline-block;
-            background: #f1f5f9;
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-size: 0.85rem;
-            color: var(--text-soft);
-            font-weight: 500;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background-color: #f1f5f9;
-            color: var(--text-soft);
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .close-modal:hover {
-            background-color: #e2e8f0;
-            color: var(--error-color);
-            transform: rotate(90deg);
-        }
+      .fab {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+      }
     `;
   }
 
   _emptyContent() {
-    this._shadowRoot.innerHTML = ``;
+    this._shadowRoot.innerHTML = "";
   }
 
   async connectedCallback() {
     this.render();
-    this._loadNotes();
+    await this._loadNotes();
+
+    this.addEventListener("search", (event) => {
+      this._query = event.detail.query;
+      this._updateNoteLists();
+    });
+    this.addEventListener("filter-change", (event) => {
+      this._currentFilter = event.detail.filter;
+      this._updateNoteLists();
+    });
+    this.addEventListener("viewNote", (event) => {
+      const note = event.detail;
+
+      this._shadowRoot.getElementById("view-title").innerText = note.title;
+      this._shadowRoot.getElementById("view-body").innerText = note.body;
+      this._shadowRoot.getElementById("view-date").innerText = new Date(
+        note.createdAt
+      ).toLocaleDateString();
+
+      this._openModal("view-modal");
+    });
 
     this.addEventListener("addNote", async (event) => {
       const { title, body } = event.detail;
       try {
         this._showLoading(true);
-        await notesAPI.createNote({
-          title,
-          body,
-        });
+        await notesAPI.createNote({ title, body });
         await this._loadNotes();
         Swal.fire({
-          toast: true,
-          position: "top-end",
+          title: "Success",
+          text: "Catatan berhasil ditambahkan",
           icon: "success",
-          title: "Catatan berhasil ditambahkan",
+          timer: 2000,
           showConfirmButton: false,
-          timer: 1500,
         });
       } catch (error) {
         Swal.fire({
-          toast: true,
-          position: "top-end",
+          title: "Error",
+          text: "Gagal menambahkan catatan",
           icon: "error",
-          title: "Catatan gagal ditambahkan",
+          timer: 2000,
           showConfirmButton: false,
-          timer: 1500,
         });
-        console.error(error);
       } finally {
+        this._closeModal("form-modal");
         this._showLoading(false);
       }
     });
-
-    this.addEventListener("viewNote", (event) => {
-      const note = event.detail;
-      const modal = this._shadowRoot.getElementById("modal");
-      const modalContent = this._shadowRoot.querySelector(".modal-content");
-
-      this._shadowRoot.getElementById("modal-title").innerText = note.title;
-      this._shadowRoot.getElementById("modal-body").innerText = note.body;
-      this._shadowRoot.getElementById("modal-date").innerText = new Date(
-        note.createdAt
-      ).toLocaleDateString();
-
-      // Membuka modal dengan animasi
-      modal.style.display = "flex";
-      animate(modal, {
-        opacity: [0, 1],
-        duration: 300,
-        easing: "easeOutSine",
-      });
-
-      animate(modalContent, {
-        scale: [0.9, 1],
-        opacity: [0, 1],
-        translateY: [20, 0],
-        duration: 400,
-        easing: "easeOutCubic",
-      });
-
-      modal.onclick = (e) => {
-        if (e.target === modal) {
-          this._closeModal();
-        }
-      };
-    });
-
-    this._shadowRoot
-      .getElementById("close-modal")
-      .addEventListener("click", () => {
-        this._closeModal();
-      });
 
     this.addEventListener("archiveNote", async (event) => {
       const noteId = event.detail;
@@ -241,7 +218,6 @@ class NotesApp extends HTMLElement {
           showConfirmButton: false,
           timer: 1500,
         });
-        console.error(error);
       } finally {
         this._showLoading(false);
       }
@@ -274,33 +250,41 @@ class NotesApp extends HTMLElement {
             timer: 1500,
           });
         } catch (error) {
-          alert(error.message);
-          console.error(error);
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "error",
+            title: "Catatan gagal dihapus",
+            showConfirmButton: false,
+            timer: 1500,
+          });
         } finally {
           this._showLoading(false);
         }
       }
     });
-  }
 
-  _closeModal() {
-    const modal = this._shadowRoot.getElementById("modal");
-    const modalContent = this._shadowRoot.querySelector(".modal-content");
-
-    animate(modalContent, {
-      scale: [1, 0.9],
-      opacity: [1, 0],
-      translateY: [0, 20],
-      duration: 300,
-      easing: "easeInCubic",
+    this.addEventListener("toggle-form", () => {
+      this._openModal("form-modal");
     });
 
-    animate(modal, {
-      opacity: [1, 0],
-      duration: 300,
-      easing: "easeInSine",
-    }).then(() => {
-      modal.style.display = "none";
+    this._shadowRoot.getElementById("fab-add").addEventListener("click", () => {
+      this._openModal("form-modal");
+    });
+
+    this._shadowRoot.querySelectorAll(".close-modal").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const modal = btn.closest(".modal");
+        this._closeModal(modal.id);
+      });
+    });
+
+    this._shadowRoot.querySelectorAll(".modal").forEach((modal) => {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          this._closeModal(modal.id);
+        }
+      });
     });
   }
 
@@ -313,60 +297,99 @@ class NotesApp extends HTMLElement {
       this._notes = [...activeNotes, ...archivedNotes];
       this._updateNoteLists();
     } catch (error) {
-      console.error(error);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Gagal memuat catatan",
+        showConfirmButton: false,
+        timer: 1500,
+      });
     } finally {
       this._showLoading(false);
     }
   }
+
   _updateNoteLists() {
     const activeNoteList = this._shadowRoot.querySelector("#active-notes");
     const archivedNoteList = this._shadowRoot.querySelector("#archived-notes");
+    const activeSection = this._shadowRoot.querySelector("#active-section");
+    const archivedSection = this._shadowRoot.querySelector("#archived-section");
+
+    const query = this._query.toLowerCase();
+    const filteredNotes = this._notes.filter((note) => {
+      const titleMatch = note.title.toLowerCase().includes(query);
+      const bodyMatch = note.body.toLowerCase().includes(query);
+      return titleMatch || bodyMatch;
+    });
 
     if (activeNoteList) {
-      activeNoteList.setNotes = this._notes.filter((note) => !note.archived);
+      activeNoteList.setNotes = filteredNotes.filter((note) => !note.archived);
     }
     if (archivedNoteList) {
-      archivedNoteList.setNotes = this._notes.filter((note) => note.archived);
+      archivedNoteList.setNotes = filteredNotes.filter((note) => note.archived);
     }
-  }
-  _showLoading(isActive) {
-    const loader = this._shadowRoot.querySelector("loading-indicator");
-    if (loader) {
-      if (isActive) {
-        loader.setAttribute("active", "");
-      } else {
-        loader.removeAttribute("active");
+
+    if (activeSection && archivedSection) {
+      if (this._currentFilter === "all") {
+        activeSection.style.display = "block";
+        archivedSection.style.display = "block";
+      } else if (this._currentFilter === "active") {
+        activeSection.style.display = "block";
+        archivedSection.style.display = "none";
+      } else if (this._currentFilter === "archived") {
+        activeSection.style.display = "none";
+        archivedSection.style.display = "block";
       }
     }
+  }
+
+  _showLoading(active) {
+    const loader = this._shadowRoot.querySelector("loading-indicator");
+    if (active) loader.setAttribute("active", "");
+    else loader.removeAttribute("active");
   }
 
   render() {
     this._emptyContent();
     this._updateStyle();
-    this._shadowRoot.innerHTML += `
-    ${this._style.outerHTML}
-    <loading-indicator></loading-indicator>
-        <app-bar title="Notes App"></app-bar>
-        <main>
+    this._shadowRoot.innerHTML = `
+      ${this._style.outerHTML}
+      <loading-indicator></loading-indicator>
+      <app-bar></app-bar>
+      <nav-bar></nav-bar>
+
+      <main>
+        <section id="active-section">
+          <h2 class="section-title">Catatan Aktif</h2>
+          <note-list id="active-notes"></note-list>
+        </section>
+
+        <section id="archived-section">
+          <h2 class="section-title">Arsip</h2>
+          <note-list id="archived-notes"></note-list>
+        </section>
+
+        <div class="modal" id="view-modal">
+          <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2 id="view-title"></h2>
+            <p id="view-body"></p>
+            <div id="view-date"></div>
+          </div>
+        </div>
+
+        <div class="modal" id="form-modal">
+          <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Buat Catatan Baru</h2>
             <note-form></note-form>
-            
-            <h2 class="section-title">Daftar Catatan</h2>
-            <note-list id="active-notes"></note-list>
+          </div>
+        </div>
+      </main>
 
-            <h2 class="section-title">Arsip</h2>
-            <note-list id="archived-notes"></note-list>
-
-            <div class="modal" id="modal">
-                <div class="modal-content">
-                    <button class="close-modal" id="close-modal">&times;</button>
-                    <h2 id="modal-title"></h2>
-                    <p id="modal-body"></p>
-                    <div class="date" id="modal-date"></div>
-                </div>
-            </div>
-        </main>
+      <button class="fab" id="fab-add">&plus;</button>
     `;
-    this._updateNoteLists();
   }
 }
 

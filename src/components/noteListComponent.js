@@ -39,11 +39,11 @@ class NoteList extends HTMLElement {
         }
 
         .note-list {
+            padding: 1rem;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            padding: 0 24px 40px 24px;
-            align-items: stretch;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
         }
 
         @media screen and (max-width: 640px) {
