@@ -155,11 +155,7 @@ Semua komponen UI dibangun sebagai custom elements menggunakan Web Components AP
 
 ## 📄 Lisensi
 
-Proyek ini dibuat sebagai submission untuk kursus Frontend Web Development Dicoding.
-
-## 👨‍💻 Pembuat
-
-Dibuat dengan ❤️ sebagai bagian dari learning path Frontend Web Development Dicoding.
+Proyek ini dibuat sebagai submission untuk kursus Frontend Web Development Dicoding, sebagai bagian dari learning path Frontend Web Development Dicoding.
 
 ---
 
